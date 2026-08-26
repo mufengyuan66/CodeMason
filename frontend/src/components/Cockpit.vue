@@ -19,6 +19,7 @@ import EvolutionPanel from './EvolutionPanel.vue'
 import FirstRunGuide from './FirstRunGuide.vue'
 import ApprovalInline from './ApprovalInline.vue'
 import SuccessFeedback from './SuccessFeedback.vue'
+import ModelConfigPanel from './ModelConfigPanel.vue'
 import type { Event } from '../api'
 
 interface Props {
@@ -61,6 +62,7 @@ const modeHint = ref(false)
 const health = ref<any>(null)
 const sessionsError = ref('')
 const themeOpen = ref(false)
+const showConfig = ref(false) // 模型配置面板
 let modeHintTimer: number | null = null
 
 // 权限控制（参考 Codex 三档权限：default / auto-review / full-access）
@@ -330,25 +332,29 @@ watch(events, (newEvents) => {
 
     <!-- 顶栏 -->
     <header class="cockpit-topbar">
-      <button class="icon-btn" data-testid="cp-back" aria-label="返回" @click="props.onBack">
-        ←
+      <button class="topbar-btn" data-testid="cp-back" aria-label="返回" @click="props.onBack">
+        <svg class="topbar-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <span class="topbar-btn-text">返回</span>
       </button>
       <div class="cp-brand">
         <span class="cp-logo">CM</span>
         <span class="cp-title">CodeMason 驾驶舱</span>
       </div>
-      <div :class="['cp-status', connected ? 'is-online' : 'is-offline']">
+      <div :class="['cp-status', connected ? 'is-online' : 'is-offline']" @click="showConfig = !showConfig" style="cursor: pointer" title="点击配置模型">
         <span class="status-dot" />
-        {{ connected ? '内核已连接' : '重连中…' }}
+        {{ connected ? '内核已连接' : '点击配置模型' }}
       </div>
-      <button class="icon-btn" title="释放空间（压缩历史记录）" aria-label="释放空间（压缩历史记录）" data-testid="cp-compact" @click="confirm = { type: 'compact' }">
-        ⚡
+      <button class="topbar-btn" title="释放空间（压缩历史记录）" aria-label="释放空间（压缩历史记录）" data-testid="cp-compact" @click="confirm = { type: 'compact' }">
+        <svg class="topbar-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        <span class="topbar-btn-text">压缩</span>
       </button>
-      <button class="icon-btn" title="停止当前任务" aria-label="停止当前任务" data-testid="cp-cancel" @click="confirm = { type: 'cancel' }">
-        ■
+      <button class="topbar-btn" title="停止当前任务" aria-label="停止当前任务" data-testid="cp-cancel" @click="confirm = { type: 'cancel' }">
+        <svg class="topbar-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="10" x2="14" y1="12" y2="12"/></svg>
+        <span class="topbar-btn-text">停止</span>
       </button>
-      <button class="icon-btn" title="主题设置" aria-label="主题设置" data-testid="cp-theme" @click="toggleTheme">
-        ⚙
+      <button class="topbar-btn" title="主题设置" aria-label="主题设置" data-testid="cp-theme" @click="toggleTheme">
+        <svg class="topbar-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span class="topbar-btn-text">主题</span>
       </button>
     </header>
 
@@ -506,5 +512,13 @@ watch(events, (newEvents) => {
 
     <!-- 主题面板（换壁纸式个性化） -->
     <ThemePanel v-if="themeOpen" @close="themeOpen = false" />
+
+    <!-- 模型配置面板（全屏覆盖层） -->
+    <div v-if="showConfig" class="config-overlay">
+      <div class="config-overlay-header">
+        <button class="config-overlay-close" @click="showConfig = false">← 返回驾驶舱</button>
+      </div>
+      <ModelConfigPanel />
+    </div>
   </div>
 </template>

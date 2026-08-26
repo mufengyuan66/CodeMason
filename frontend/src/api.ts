@@ -147,3 +147,53 @@ export function useCockpit(options: {
     compact
   }
 }
+
+// ========== 模型配置 API ==========
+
+export interface ModelConfig {
+  provider: string
+  base_url: string
+  model: string
+  api_key_ref: string
+  api_key_configured: boolean
+}
+
+export interface ModelConfigResponse {
+  models: Record<string, ModelConfig>
+}
+
+export interface ModelTestResult {
+  ok: boolean
+  latency_ms: number
+  model: string
+  error: string | null
+  response_preview: string | null
+}
+
+/** 获取模型配置 */
+export async function fetchModelConfig(): Promise<ModelConfigResponse> {
+  const res = await fetch('/api/model-config', { headers: { 'x-agent-token': TOKEN } })
+  if (!res.ok) throw new Error('加载模型配置失败')
+  return res.json()
+}
+
+/** 保存模型配置 */
+export async function saveModelConfig(models: Record<string, any>): Promise<void> {
+  const res = await fetch('/api/model-config', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-agent-token': TOKEN },
+    body: JSON.stringify({ models }),
+  })
+  if (!res.ok) throw new Error('保存模型配置失败')
+}
+
+/** 测试模型连通性 */
+export async function testModel(base_url: string, model: string, api_key: string): Promise<ModelTestResult> {
+  const res = await fetch('/api/model-test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-agent-token': TOKEN },
+    body: JSON.stringify({ base_url, model, api_key }),
+  })
+  if (!res.ok) throw new Error('测试请求失败')
+  return res.json()
+}

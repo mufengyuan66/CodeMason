@@ -24,7 +24,7 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:29864',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        // 不剥离 /api 前缀——后端端点在 /api/xxx
       },
       '/costs': {
         target: 'http://127.0.0.1:29864',

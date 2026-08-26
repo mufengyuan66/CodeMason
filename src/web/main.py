@@ -667,6 +667,60 @@ async def evolution_trend(limit: int = 50):
     return {"enabled": True, "trend": _evolution_engine.get_trend_data(limit=limit)}
 
 
+# ========== 模型配置（用户自配） ==========
+
+@app.get("/api/model-config", dependencies=[Depends(require_auth)])
+async def get_model_config():
+    """获取当前模型配置。"""
+    from ..config import load_config, resolve_api_key
+
+    config = load_config()
+    # 脱敏：返回时 api_key 不暴露完整值，只返回是否已配置
+    result = {"models": {}}
+    for role, cfg in config.get("models", {}).items():
+        key = resolve_api_key(cfg.get("api_key_ref", ""))
+        result["models"][role] = {
+            "provider": cfg.get("provider", ""),
+            "base_url": cfg.get("base_url", ""),
+            "model": cfg.get("model", ""),
+            "api_key_ref": cfg.get("api_key_ref", ""),
+            "api_key_configured": bool(key),
+        }
+    return result
+
+
+class ModelConfigUpdate(BaseModel):
+    models: dict[str, dict]
+
+
+@app.put("/api/model-config", dependencies=[Depends(require_auth)])
+async def update_model_config(body: ModelConfigUpdate):
+    """保存模型配置。"""
+    from ..config import save_config
+
+    config = {"models": body.models}
+    save_config(config)
+    return {"ok": True, "message": "配置已保存"}
+
+
+class ModelTestRequest(BaseModel):
+    base_url: str
+    model: str
+    api_key: str
+
+
+@app.post("/api/model-test", dependencies=[Depends(require_auth)])
+async def test_model(req: ModelTestRequest):
+    """测试模型连通性。"""
+    from ..config import test_model_connection
+
+    return await test_model_connection(
+        base_url=req.base_url,
+        model=req.model,
+        api_key=req.api_key,
+    )
+
+
 # ========== WebSocket（核心） ==========
 
 async def _broadcast(event_obj) -> None:
