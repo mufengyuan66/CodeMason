@@ -64,7 +64,7 @@ headless 内核（Python 进程，--mode rpc / run）
     ├── JSONL 持久化（append-only 事实源 + flock 写锁）
     ├── OTel 导出（prompt / 审批 / 工具 / 沙箱轨迹）
     └── WebSocket 广播（Web 驾驶舱，多标签页共享会话）
-Web 驾驶舱（React 18 + Vite）← 唯一界面
+Web 驾驶舱（Vue 3 + Vite）← 唯一界面
 ```
 
 ```
@@ -95,7 +95,7 @@ Agent Loop（手写状态机 + 事件流）
 ## 技术栈
 
 - **后端**：Python / FastAPI + WebSocket / pydantic
-- **前端**：React 18 + Vite（三区工作台：事件流时间线 / 审批中心+收件箱 / YAGNI 看板 / 成本 / 上下文 / 健康信号 / 贡献审计 / 只读代码查看器 / 主题）
+- **前端**：Vue 3 + Vite（三区工作台：事件流时间线 / 审批中心+收件箱 / YAGNI 看板 / 成本 / 上下文 / 健康信号 / 贡献审计 / 只读代码查看器 / 主题）
 - **解析**：Tree-sitter（Python / JS / Go）+ 引用图 + AST 符号索引
 - **存储**：JSONL 事件存储 + Git Checkpoint（三-parent stash + 私用 refs）
 - **沙箱**：Firecracker microVM（默认）/ Docker 加固 / gVisor / E2B（SandboxProvider 可插拔）
@@ -175,7 +175,7 @@ src/
 ├── evaluation/     # 评测闭环（fail-to-pass + 机读验证门禁）
 └── web/            # FastAPI + WebSocket 驾驶舱后端
 frontend/
-└── src/            # React 驾驶舱（Timeline / ApprovalCenter / ApprovalInbox / YagniBoard / CostCockpit / ContextPanel / HealthSignals / Contribution / ThemePanel）
+└── src/            # Vue 驾驶舱（Timeline / ApprovalCenter / ApprovalInbox / YagniBoard / CostCockpit / ContextPanel / HealthSignals / Contribution / ThemePanel）
 ```
 
 ## 许可

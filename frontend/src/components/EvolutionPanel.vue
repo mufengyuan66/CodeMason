@@ -127,12 +127,6 @@ const formatDuration = (ms: number) => {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
-const formatTime = (ts: number) => {
-  if (!ts) return '—'
-  const d = new Date(ts * 1000)
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
-}
-
 const scoreColor = (score: number) => {
   if (score >= 0.8) return '#10b981'
   if (score >= 0.5) return '#f59e0b'

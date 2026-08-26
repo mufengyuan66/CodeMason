@@ -63,6 +63,37 @@ const sessionsError = ref('')
 const themeOpen = ref(false)
 let modeHintTimer: number | null = null
 
+// 权限控制（参考 Codex 三档权限：default / auto-review / full-access）
+const permissionLevel = ref<'default' | 'auto-review' | 'full-access'>('default')
+const permissionLevels = ['default', 'auto-review', 'full-access'] as const
+const permissionLabels: Record<string, string> = {
+  'default': '默认',
+  'auto-review': '自动审查',
+  'full-access': '完全访问'
+}
+const permissionIcons: Record<string, string> = {
+  'default': '🔒',
+  'auto-review': '🛡️',
+  'full-access': '🔓'
+}
+
+const permissionLabel = computed(() => permissionLabels[permissionLevel.value])
+const permissionIcon = computed(() => permissionIcons[permissionLevel.value])
+
+const cyclePermission = () => {
+  const idx = permissionLevels.indexOf(permissionLevel.value)
+  permissionLevel.value = permissionLevels[(idx + 1) % permissionLevels.length]
+}
+
+// 模型选择（参考 Codex 右下角模型选择）
+const models = ['deepseek-v4-flash', 'deepseek-v4', 'gpt-5.4-mini']
+const currentModelIndex = ref(0)
+const currentModel = computed(() => models[currentModelIndex.value])
+
+const cycleModel = () => {
+  currentModelIndex.value = (currentModelIndex.value + 1) % models.length
+}
+
 // P0-1: 首次运行引导
 const showFirstRun = ref(false)
 const isFirstRun = () => {
@@ -252,12 +283,12 @@ const handleFirstRunUseExample = (task: string) => {
 
 // P0-2: 审批内联处理
 const handleApproveInline = (approvalId: string) => {
-  sendApproval(approvalId, true)
+  sendApproval(approvalId, 'approve')
   approvals.value = approvals.value.filter(a => a.approval_id !== approvalId)
 }
 
 const handleRejectInline = (approvalId: string, reason: string) => {
-  sendApproval(approvalId, false, reason)
+  sendApproval(approvalId, 'reject', reason)
   approvals.value = approvals.value.filter(a => a.approval_id !== approvalId)
 }
 
@@ -270,14 +301,6 @@ const handleViewTimeline = () => {
 const handleDismissSuccess = () => {
   showSuccess.value = false
 }
-
-// 计算最新的成功数据
-const latestSuccessMetrics = computed(() => {
-  const completedEvents = events.value.filter((e: Event) => e.type === 'ItemCompleted')
-  if (completedEvents.length === 0) return null
-  const latest = completedEvents[completedEvents.length - 1]
-  return latest.metrics || null
-})
 
 // 监听任务完成，显示成功反馈
 watch(events, (newEvents) => {
@@ -377,6 +400,13 @@ watch(events, (newEvents) => {
         </div>
         
         <footer class="cp-inputbar">
+          <!-- 权限控制（参考 Codex 三档权限） -->
+          <div class="cp-permission" :class="{ 'is-active': permissionLevel !== 'default' }" @click="cyclePermission">
+            <span class="cp-permission-icon">{{ permissionIcon }}</span>
+            <span class="cp-permission-text">{{ permissionLabel }}</span>
+          </div>
+
+          <!-- 模式切换（执行/规划） -->
           <div class="cp-mode-switch">
             <button :class="['mode-btn', { 'is-active': mode === 'act' }]" data-testid="mode-act" @click="handleModeSwitch('act')">
               执行
@@ -385,9 +415,8 @@ watch(events, (newEvents) => {
               规划
             </button>
           </div>
-          <div v-if="modeHint" class="mode-hint" data-testid="mode-hint">
-            {{ mode === 'plan' ? '规划：只读模式，Agent 不改任何文件，先出方案' : '执行：Agent 可读写文件并运行命令（危险操作需审批）' }}
-          </div>
+
+          <!-- 输入框 -->
           <textarea
             v-model="input"
             class="cp-input"
@@ -396,10 +425,24 @@ watch(events, (newEvents) => {
             rows="2"
             @keydown="handleKeyDown"
           />
+
+          <!-- 模型选择（参考 Codex 右下角模型选择） -->
+          <div class="cp-model-select" @click="cycleModel">
+            <span class="cp-model-name">{{ currentModel }}</span>
+            <span class="cp-model-arrow">▼</span>
+          </div>
+
+          <!-- 发送按钮 -->
           <button class="cp-send" :disabled="!input.trim()" data-testid="cp-send" @click="handleSend">
+            <span class="cp-send-icon">↑</span>
             发送
           </button>
         </footer>
+
+        <!-- 模式提示（保留原有） -->
+        <div v-if="modeHint" class="mode-hint" data-testid="mode-hint">
+          {{ mode === 'plan' ? '规划：只读模式，Agent 不改任何文件，先出方案' : '执行：Agent 可读写文件并运行命令（危险操作需审批）' }}
+        </div>
       </main>
 
       <!-- 右：监控抽屉 -->
@@ -431,32 +474,6 @@ watch(events, (newEvents) => {
         </div>
       </aside>
     </div>
-
-    <!-- P0-2: 内联审批区域样式 -->
-    <style>
-    .approvals-inline-area {
-      padding: var(--space-3) var(--space-4);
-      border-top: 1px solid var(--c-border);
-      background: var(--c-surface);
-    }
-
-    .success-feedback-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    </style>
 
     <!-- 确认弹层：压缩 / 取消 -->
     <ConfirmDialog

@@ -94,7 +94,8 @@ class TestRetryEngine:
         def always_fail():
             raise TimeoutError("always")
 
-        engine = RetryEngine(policy=RetryPolicy(base_delay=0.05, max_delay=0.1, time_budget=0.15))
+        # max_retries=100 确保时间预算是唯一终止条件（避免 jitter 过小导致 max_retries 先触发）
+        engine = RetryEngine(policy=RetryPolicy(base_delay=0.05, max_delay=0.1, max_retries=100, time_budget=0.15))
         start = time.time()
         result = engine.execute(always_fail)
         assert result.ok is False

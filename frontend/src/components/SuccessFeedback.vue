@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 
 interface Props {
   linesReduced?: number
