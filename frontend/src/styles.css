@@ -233,7 +233,10 @@ body {
   border-color: var(--c-primary); color: var(--c-primary-soft); box-shadow: var(--glow-primary);
   background: var(--c-surface);
 }
-.topbar-btn-icon { font-size: var(--fs-sm); }
+.topbar-btn-icon {
+  width: 16px; height: 16px; flex-shrink: 0;
+  stroke: currentColor; fill: none;
+}
 .topbar-btn-text { font-family: var(--font-body); }
 
 /* 左侧导航 */
